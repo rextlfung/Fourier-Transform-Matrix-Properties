@@ -8,10 +8,23 @@ nbins = 100; % # of bins for histogram
 %% Load in mristack example images
 
 load mristack
-images = mristack;
+images = permute(double(mristack), [2,1,3]);
 
 % Visualize
-figure(); montage(images)
+figure(); im(images)
+
+%% Compress each image as best rank-k approximation
+k = min(Nx,Ny)/2;
+images_compressed = zeros(size(images));
+for n = 1:N_images
+    [U,S,V] = svd(images(:,:,n));
+    images_compressed(:,:,n) = U(:,1:k) * S(1:k,1:k) * V(:,1:k).';
+end
+images = images_compressed;
+
+% Visualize compressed images
+figure(); im(images);
+
 %% Compute the mean, rank, Frobenius norm, 2-norm, and stable rank of each image
 
 means = zeros(1,N_images);
@@ -47,7 +60,7 @@ end
 figure(); tiledlayout(ceil(sqrt(N_images)),ceil(sqrt(N_images)),'TileSpacing','none');
 for n = 1:N_images
     nexttile
-    imagesc(log(abs(kspaces(:,:,n))))
+    im(log(abs(kspaces(:,:,n))))
     axis off;
     colormap gray;
 end
